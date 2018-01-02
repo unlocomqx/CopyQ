@@ -163,9 +163,8 @@ QPixmap imageFromPrefix(const QString &iconSuffix, const QString &resources)
 void drawFontIcon(QPixmap *pix, ushort id, int w, int h, const QColor &color)
 {
     QPainter painter(pix);
-    QFont font = iconFont();
-    const int margins = h / 8;
-    font.setPixelSize(h - margins);
+    const QFont font = iconFontFitSize(w, h);
+
     painter.setFont(font);
     painter.setPen(color);
 
@@ -192,7 +191,9 @@ QColor getDefaultIconColor(const QColor &color)
 
 bool loadIconFont()
 {
-    static bool iconFontLoaded = QFontDatabase::addApplicationFont(":/images/fontawesome-webfont.ttf") != -1;
+    static bool iconFontLoaded =
+            QFontDatabase::addApplicationFont(":/images/fontawesome-solid.ttf") != -1
+         && QFontDatabase::addApplicationFont(":/images/fontawesome-brands.ttf") != -1;
     return iconFontLoaded;
 }
 
@@ -305,7 +306,7 @@ public:
         const int strokeWidth = static_cast<int>(ratio + h / 16);
 
         QFont font;
-        if ( tag.size() == 1 && tag.at(0).unicode() > IconFirst )
+        if ( tag.size() == 1 )
             font = iconFont();
         const auto pixelSize = h * 2 / 5;
         font.setPixelSize(pixelSize);
@@ -485,8 +486,7 @@ unsigned short toIconId(const QString &fileNameOrId)
     if ( fileNameOrId.size() != 1 )
         return 0;
 
-    const auto unicode = fileNameOrId.at(0).unicode();
-    return unicode >= IconFirst ? unicode : 0;
+    return fileNameOrId.at(0).unicode();
 }
 
 void setSessionIconColor(QColor color)
