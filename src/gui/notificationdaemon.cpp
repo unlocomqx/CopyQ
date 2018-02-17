@@ -133,6 +133,10 @@ void NotificationDaemon::doUpdateNotifications()
         if (m_position & Bottom)
             y -= notification->height();
 
+        // I centered the tooltip to bring it to field of view
+        x = (screen.width() - notification->width()) / 2;
+        y = (screen.height() - notification->height()) / 2;
+
         notification->move(x, y);
 
         if (m_position & Top)

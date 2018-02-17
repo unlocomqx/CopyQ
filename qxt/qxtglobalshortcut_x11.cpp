@@ -202,6 +202,10 @@ KeySym qtKeyToXKeySym(Qt::Key key)
 
 } // namespace
 
+int pressed_modifiers_count = 0;
+int released_modifiers_count = 0;
+bool after_release = false;
+
 #if QT_VERSION < QT_VERSION_CHECK(5,0,0)
 bool QxtGlobalShortcutPrivate::eventFilter(void* message)
 {
@@ -217,28 +221,71 @@ bool QxtGlobalShortcutPrivate::nativeEventFilter(const QByteArray & eventType,
 {
     Q_UNUSED(result);
 
+    bool is_key_press = false;
+
     xcb_key_press_event_t *kev = nullptr;
     if (eventType == "xcb_generic_event_t") {
         xcb_generic_event_t* ev = static_cast<xcb_generic_event_t *>(message);
-        if ((ev->response_type & 127) == XCB_KEY_PRESS)
+        if ((ev->response_type & 127) == XCB_KEY_PRESS) {
             kev = static_cast<xcb_key_press_event_t *>(message);
+            is_key_press = true;
+            after_release = false;
+            pressed_modifiers_count = 0;
+            released_modifiers_count = 0;
+        }
+        if ((ev->response_type & 127) == 85 && after_release) {
+            // I could not differentiate between a modifier key up and other events like a mouse click
+            kev = static_cast<xcb_key_press_event_t *>(message);
+            is_key_press = false;
+            released_modifiers_count++;
+        }
+        if ((ev->response_type & 127) == XCB_KEY_RELEASE) {
+            // the key was released, set the necessary global flags
+            after_release = true;
+            is_key_press = false;
+        }
     }
 
     if (kev != nullptr) {
         unsigned int keycode = kev->detail;
         unsigned int keystate = 0;
-        if(kev->state & XCB_MOD_MASK_1)
+        if(kev->state & XCB_MOD_MASK_1) {
+            if (is_key_press) {
+                pressed_modifiers_count++;
+            }
             keystate |= Mod1Mask;
-        if(kev->state & XCB_MOD_MASK_CONTROL)
+        }
+        if(kev->state & XCB_MOD_MASK_CONTROL) {
+            if (is_key_press) {
+                pressed_modifiers_count++;
+            }
             keystate |= ControlMask;
-        if(kev->state & XCB_MOD_MASK_4)
+        }
+        if(kev->state & XCB_MOD_MASK_4) {
+            if (is_key_press) {
+                pressed_modifiers_count++;
+            }
             keystate |= Mod4Mask;
-        if(kev->state & XCB_MOD_MASK_SHIFT)
+        }
+        if(kev->state & XCB_MOD_MASK_SHIFT) {
+            if (is_key_press) {
+                pressed_modifiers_count++;
+            }
             keystate |= ShiftMask;
+        }
 #endif
-        activateShortcut(keycode,
-            // Mod1Mask == Alt, Mod4Mask == Meta
-            keystate & (ShiftMask | ControlMask | Mod1Mask | Mod4Mask));
+//        COPYQ_LOG(QString("pressed: %1").arg(pressed_modifiers_count));
+//        COPYQ_LOG(QString("released: %1").arg(released_modifiers_count));
+        if (is_key_press) {
+            activateShortcut(keycode,
+                    // Mod1Mask == Alt, Mod4Mask == Meta
+                             keystate & (ShiftMask | ControlMask | Mod1Mask | Mod4Mask));
+        } else if (pressed_modifiers_count == released_modifiers_count) {
+            pressed_modifiers_count = 0;
+            released_modifiers_count = 0;
+            COPYQ_LOG(QString("Release Shortcut"));
+            releaseShortcut();
+        }
     }
     return false;
 }

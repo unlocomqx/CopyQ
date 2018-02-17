@@ -90,6 +90,8 @@ QVector<Command> globalShortcutCommands()
             << createGlobalShortcut( AddCommandDialog::tr("Enable clipboard storing"), "enable()", IconEye )
             << createGlobalShortcut( AddCommandDialog::tr("Paste and copy next"), "paste(); next()", IconArrowCircleDown )
             << createGlobalShortcut( AddCommandDialog::tr("Paste and copy previous"), "paste(); previous()", IconArrowCircleUp )
+            << createGlobalShortcut( AddCommandDialog::tr("Show and paste next"), "next();tooltip(clipboard());enablePasteFlag()", IconArrowCircleDown )
+            << createGlobalShortcut( AddCommandDialog::tr("Show and paste previous"), "previous();tooltip(clipboard());enablePasteFlag()", IconArrowCircleUp )
             << createGlobalShortcut( AddCommandDialog::tr("Take screenshot"), commandScreenshot, IconCamera )
             << createGlobalShortcut( AddCommandDialog::tr("Paste current date and time"), commandPasteDateTime(), IconClock );
 }

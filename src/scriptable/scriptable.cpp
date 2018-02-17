@@ -65,6 +65,7 @@
 #include <QTimer>
 
 #include <cmath>
+#include <global.h>
 
 Q_DECLARE_METATYPE(QByteArray*)
 Q_DECLARE_METATYPE(QFile*)
@@ -974,6 +975,21 @@ QScriptValue Scriptable::copySelection()
 #endif
 }
 
+void Scriptable::enablePasteFlag() {
+    paste_on_release_enabled = true;
+    COPYQ_LOG(QString("paste_on_release_enabled"));
+}
+
+void Scriptable::pasteOnRelease() {
+    paste_on_release_enabled = true;
+    if (paste_on_release_enabled) {
+        COPYQ_LOG(QString("is_enabled"));
+        paste_on_release_enabled = false;
+    } else {
+        COPYQ_LOG(QString("is_disabled"));
+    }
+}
+
 void Scriptable::paste()
 {
     m_skipArguments = 0;
@@ -1212,6 +1228,14 @@ void Scriptable::popup()
     if ( !toInt(argument(2), &msec) )
         msec = 8000;
     m_proxy->showMessage(title, message, icon, msec);
+}
+
+void Scriptable::tooltip()
+{
+    const QString message = arg(0);
+    COPYQ_LOG(QString(message));
+    const auto icon = QString(QChar(IconInfoCircle));
+    m_proxy->showMessage("", message, icon, 1000, "center_tooltip");
 }
 
 void Scriptable::notification()
